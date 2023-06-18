@@ -1,8 +1,13 @@
 const createPath = require("../utils/path");
 
 const folderHandler = (req, res, next) => {
-    const requestFolder = req.body['folder'] || '';
+    let requestFolder = req.body['folder'] || '/';
     const absoluteFolder = createPath(requestFolder);
+    
+    while (requestFolder.startsWith('/')) {
+        requestFolder = requestFolder.replace('/', '');
+    }
+    requestFolder = '/' + requestFolder;
     
     req.folder = {
         requestFolder,

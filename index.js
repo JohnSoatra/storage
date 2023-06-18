@@ -4,14 +4,17 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 
-const authHandler = require('./middleware/auth');
 const folderHandler = require('./middleware/folder');
+const authHandler = require('./middleware/auth');
 const response = require('./utils/response');
+const getEnv = require('./utils/env');
 
-const PORT = process.env.PORT || 9999;
+const PORT = getEnv('port') || 9999;
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: ['127.0.0.1:5500', '127.0.0.1']
+}));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(busboy());
@@ -37,6 +40,10 @@ app.post('/', (req, res) => {
             response(res, 500, 'Internal Error');
         });
     });
+});
+
+app.get('/', (req, res) => {
+    response(res, 200, 'Hello, World');
 });
 
 app.get('/list', (req, res) => {
