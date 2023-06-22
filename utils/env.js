@@ -44,4 +44,11 @@ function getEnv(name, default_) {
     return __env[name] || __env[name_lower] || __env[name_upper] || default_;
 }
 
-module.exports = getEnv;
+function testMode() {
+    return getEnv('TYPE', 'test') === 'test';
+}
+
+module.exports = {
+    getEnv,
+    testMode
+};

@@ -1,14 +1,18 @@
 const createPath = require("../utils/path");
+const response = require("../utils/response");
 
 const folderHandler = (req, res, next) => {
-    let requestFolder = req.body['folder'] || '/';
-    const absoluteFolder = createPath(requestFolder);
-    
-    while (requestFolder.startsWith('/')) {
-        requestFolder = requestFolder.replace('/', '');
+    let auth = req.headers.authentication || {};
+
+    try {
+        auth = JSON.parse(auth);
+    } catch {
+        response(res, 400, 'No authentication provided');
     }
-    requestFolder = '/' + requestFolder;
-    
+
+    const requestFolder = auth.folder || ('/' + (auth.user || ''));
+    const absoluteFolder = createPath(requestFolder);
+
     req.folder = {
         requestFolder,
         absoluteFolder

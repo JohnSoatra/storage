@@ -6,7 +6,7 @@ function dbExec(sql, database) {
     });
 }
 
-function dbGet(sql, data) {
+function dbGet(sql, database) {
     return new Promise((res, _) => {
         database.get(sql, (error, data) => {
             res({error, data});
@@ -14,7 +14,16 @@ function dbGet(sql, data) {
     });
 }
 
+function dbAll(sql, database) {
+    return new Promise((res, _) => {
+        database.all(sql, (error, data) => {
+            res({error, data});
+        });
+    });
+}
+
 module.exports = {
     dbExec,
-    dbGet
+    dbGet,
+    dbAll
 };
