@@ -97,7 +97,7 @@ app.get('/:name', (req, res) => {
                     "Content-Range": `bytes ${start}-${end}/${videoSize}`,
                     "Accept-Ranges": "bytes",
                     "Content-Length": (end - start + 1),
-                    "Content-Type": mime.lookup(getPath),
+                    "Content-Type": mime.lookup(getPath)
                 };
 
                 res.writeHead(206, headers);
