@@ -92,7 +92,7 @@ app.get('/:name', (req, res) => {
                 const start = Number(range.replace(/\D/g, ""));
                 const end = Math.min(start + chuckSize, videoSize - 1);
                 const reader = fs.createReadStream(getPath, { start, end });
-                
+
                 const headers = {
                     "Content-Range": `bytes ${start}-${end}/${videoSize}`,
                     "Accept-Ranges": "bytes",
