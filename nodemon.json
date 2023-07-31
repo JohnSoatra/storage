@@ -1,6 +1,6 @@
 {
     "watch": ["."],
-    "ignore": ["./dist", "./storage"],
+    "ignore": ["./dist", "./storage", "./test", "./src/test"],
     "ext": "*",
     "exec": "npm run start"
 }

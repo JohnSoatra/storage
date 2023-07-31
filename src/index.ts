@@ -14,6 +14,7 @@ import callback from '@/utils/response/callback';
 import checkSameDomain from '@/middleware/check_same_domain';
 import { isNumber } from '@/utils/number/number';
 import VARS from '@/constants/var';
+import newFilename from './utils/string/filename';
 
 const port = getEnv('port');
 
@@ -34,50 +35,6 @@ app.use(busboy());
 app.get('/', (_, res) => {
     response(res, 200, {
         reason: 'Server is working'
-    });
-});
-
-app.post('/', (req, res) => {
-    req.pipe(req.busboy);
-    req.busboy.on('file', (_, fileStream, fileInfo) => {
-        let fileName = fileInfo.filename
-        let save_path = path.join(VARS.STORAGE_PATH, fileName);
-
-        while (fs.existsSync(save_path)) {
-            fileName = '1-' + fileName;
-            save_path = path.join(VARS.STORAGE_PATH, fileName);
-        }
-
-        const writer = fs.createWriteStream(save_path);
-        
-        fileStream.pipe(writer);
-
-        writer.on('close', () => {
-            response(res, 200, {
-                data: fileName
-            });
-        });
-
-        writer.on('error', () => {
-            response(res, 500, {
-                reason: 'Internal Error'
-            });
-        });
-
-    });
-});
-
-app.get('/list', (req, res) => {
-    fs.readdir(VARS.STORAGE_PATH, (error, files) => {
-        if (error) {
-            response(res, 404, {
-                reason: '404 NOT Found'
-            });
-        } else {
-            response(res, 200, {
-                data: files
-            });
-        }
     });
 });
 
@@ -105,7 +62,7 @@ app.get('/:name', (req, res) => {
                     "Content-Type": mime.lookup(getPath).toString()
                 };
 
-                res.writeHead(206, undefined, headers);
+                res.writeHead(206, headers);
 
                 reader.pipe(res);
                 
@@ -154,6 +111,36 @@ app.get('/:name', (req, res) => {
     }
 });
 
+app.post('/', (req, res) => {
+    req.pipe(req.busboy);
+    req.busboy.on('file', (_, fileStream, fileInfo) => {
+        let fileName = fileInfo.filename;
+        let save_path = path.join(VARS.STORAGE_PATH, fileName);
+
+        while (fs.existsSync(save_path)) {
+            fileName = newFilename(fileName);
+            save_path = path.join(VARS.STORAGE_PATH, fileName);
+        }
+
+        const writer = fs.createWriteStream(save_path);
+        
+        fileStream.pipe(writer);
+
+        writer.on('close', () => {
+            response(res, 200, {
+                data: fileName
+            });
+        });
+
+        writer.on('error', () => {
+            response(res, 500, {
+                reason: 'Internal Error'
+            });
+        });
+
+    });
+});
+
 app.delete('/:name', (req, res) => {
     const name = req.params.name;
     const delete_path = path.join(VARS.STORAGE_PATH, name);
@@ -165,7 +152,7 @@ app.delete('/:name', (req, res) => {
             });
         } else {
             response(res, 200, {
-                reason: 'successfully'
+                data: name
             });
         }
     });
