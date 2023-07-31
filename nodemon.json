@@ -1,0 +1,6 @@
+{
+    "watch": ["."],
+    "ignore": ["./dist", "./storage"],
+    "ext": "*",
+    "exec": "npm run start"
+}

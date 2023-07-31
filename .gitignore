@@ -3,4 +3,6 @@
 /data/db.db
 /storage
 /db.db
-/.env
+/.env.*
+/src/test
+/dist

@@ -1,8 +1,5 @@
-function getHost(url='') {
+function getHost(url: string) {
     return url.replace(/^(https:\/\/|http:\/\/)/, '').split('/')[0];
 }
 
-
-module.exports = {
-    getHost
-}
+export default getHost;
