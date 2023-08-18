@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import VARS from '@/constants/var';
+import VARS from '@/constants/vars';
 
 function createPath(requestPath: string) {
     const _path = path.join(VARS.STORAGE_PATH, requestPath);

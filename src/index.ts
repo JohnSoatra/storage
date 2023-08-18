@@ -1,5 +1,13 @@
 import 'module-alias/register';
 
+import VARS from '@/constants/vars';
+
+import dotEnv from 'dotenv';
+
+dotEnv.config({
+    path: VARS.ENV_PATH
+});
+
 import busboy from 'connect-busboy';
 import express from 'express';
 import fs from 'fs';
@@ -11,10 +19,10 @@ import mime from 'mime-types';
 import response from '@/utils/response/response';
 import { getEnv } from '@/utils/env/env';
 import callback from '@/utils/response/callback';
-import checkSameDomain from '@/middleware/check_same_domain';
 import { isNumber } from '@/utils/number/number';
-import VARS from '@/constants/var';
-import newFilename from './utils/string/filename';
+import newFilename from '@/utils/string/filename';
+
+import checkSameDomain from '@/middleware/check_same_domain';
 
 const port = getEnv('port');
 
@@ -24,13 +32,11 @@ if (!(port && isNumber(port))) {
 
 const app = express();
 
-app.use(checkSameDomain);
-app.use(cors({
-    origin: config.get('cors.origin'),
-}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(busboy());
+app.use(cors({ origin: config.get('cors.origin') }));
+app.use(checkSameDomain);
 
 app.get('/', (_, res) => {
     response(res, 200, {
@@ -41,9 +47,10 @@ app.get('/', (_, res) => {
 app.get('/:name', (req, res) => {
     const name = req.params.name;
     const getPath = path.join(VARS.STORAGE_PATH, name);
-    const detail = fs.lstatSync(getPath);
 
-    if (fs.existsSync(getPath) && detail.isFile()) {
+    if (fs.existsSync(getPath) && fs.lstatSync(getPath).isFile()) {
+        const detail = fs.lstatSync(getPath);
+
         if (mime.lookup(getPath).toString().includes('video/')) {
             const range = req.headers.range;
             const segmentSize = req.query['segment-size'] || '1';

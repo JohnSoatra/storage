@@ -1,12 +1,6 @@
 import fs from 'fs';
-import dotEnv from 'dotenv';
-import config from 'config';
 import toObject from '@/utils/array/array';
-import VARS from '@/constants/var';;
-
-dotEnv.config({
-    path: VARS.ENV_PATH
-});
+import VARS from '@/constants/vars';
 
 const __env = {
     ...process.env,
@@ -35,15 +29,21 @@ function readEnv() {
     throw Error('Server has no env file.');
 }
 
-function getEnv(name: string, default_?: string) {
+function getEnv(name: string) {
     const name_lower = name.toLowerCase();
     const name_upper = name.toUpperCase();
 
-    return __env[name] || __env[name_lower] || __env[name_upper] || default_;
+    const result = __env[name] || __env[name_lower] || __env[name_upper];
+
+    if (result) {
+        return result;
+    }
+
+    throw Error(`Env file has no ${name}.`);
 }
 
 function testMode() {
-    return getEnv('NODE_ENV') !== 'Production';
+    return getEnv('NODE_ENV').toLowerCase() !== 'production';
 }
 
 export {
