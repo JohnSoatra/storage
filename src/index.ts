@@ -16,13 +16,15 @@ import cors from 'cors';
 import config from 'config';
 import mime from 'mime-types';
 
-import response from '@/utils/response/response';
 import { getEnv } from '@/utils/env/env';
 import callback from '@/utils/response/callback';
 import { isNumber } from '@/utils/number/number';
 import newFilename from '@/utils/string/filename';
 
 import checkSameDomain from '@/middleware/check_same_domain';
+import testing from './utils/response/testing';
+import createApp from './utils/response/create_app';
+import getOneUser from './utils/fetch/getone_user';
 
 const port = getEnv('port');
 
@@ -30,19 +32,18 @@ if (!(port && isNumber(port))) {
     throw Error('Env has no port.')
 }
 
-const app = express();
+const app = createApp();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(busboy());
-app.use(cors({ origin: config.get('cors.origin') }));
+app.use(cors({
+    origin: config.get('cors.origin'),
+    credentials: true
+}));
 app.use(checkSameDomain);
 
-app.get('/', (_, res) => {
-    response(res, 200, {
-        reason: 'Server is working'
-    });
-});
+testing(app);
 
 app.get('/:name', (req, res) => {
     const name = req.params.name;
@@ -78,15 +79,15 @@ app.get('/:name', (req, res) => {
                 });
 
                 reader.on('error', () => {
-                    response(res, 500, {
+                    res.return({
                         reason: 'Internal error'
-                    });
+                    }, { status: 500 });
                 });
 
             } else {
-                response(res, 400, {
+                res.return({
                     reason: 'Require range'
-                });
+                }, { status: 400 });
             }
 
         } else {
@@ -105,47 +106,62 @@ app.get('/:name', (req, res) => {
             });
 
             reader.on('error', () => {
-                response(res, 500, {
+                res.return({
                     reason: 'Internal error'
-                });
+                }, { status: 500 });
             });
         }
 
     } else {
-        response(res, 404, {
+        res.return({
             reason: '404 NOT Found'
-        });
+        }, { status: 404 });
     }
 });
 
-app.post('/', (req, res) => {
-    req.pipe(req.busboy);
-    req.busboy.on('file', (_, fileStream, fileInfo) => {
-        let fileName = fileInfo.filename;
-        let save_path = path.join(VARS.STORAGE_PATH, fileName);
+app.post('/:username', async (request, response) => {
+    const username = request.params.username;
+    const user = await getOneUser(request);
 
-        while (fs.existsSync(save_path)) {
-            fileName = newFilename(fileName);
-            save_path = path.join(VARS.STORAGE_PATH, fileName);
+    if (user !== null && user.username === username) {
+        if (user.image_url) {
+            const delete_path = path.join(VARS.STORAGE_PATH, user.image_url);
+            
+            if (fs.existsSync(delete_path) && fs.lstatSync(delete_path).isFile()) {
+                fs.unlinkSync(delete_path);
+            }
         }
 
-        const writer = fs.createWriteStream(save_path);
-        
-        fileStream.pipe(writer);
+        request.pipe(request.busboy);
+        request.busboy.on('file', (_, fileStream, fileInfo) => {
+            let fileName = fileInfo.filename;
+            let save_path = path.join(VARS.STORAGE_PATH, fileName);
 
-        writer.on('close', () => {
-            response(res, 200, {
-                data: fileName
+            while (fs.existsSync(save_path)) {
+                fileName = newFilename(fileName);
+                save_path = path.join(VARS.STORAGE_PATH, fileName);
+            }
+
+            const writer = fs.createWriteStream(save_path);
+            
+            fileStream.pipe(writer);
+
+            writer.on('close', () => {
+                response.return({
+                    data: '/' + fileName
+                });
             });
-        });
 
-        writer.on('error', () => {
-            response(res, 500, {
-                reason: 'Internal Error'
+            writer.on('error', () => {
+                response.return({
+                    reason: 'Internal error'
+                }, { status: 500 });
             });
-        });
 
-    });
+        });
+    }
+
+    response.return(null, { status: 500 });
 });
 
 app.delete('/:name', (req, res) => {
@@ -154,11 +170,11 @@ app.delete('/:name', (req, res) => {
     
     fs.unlink(delete_path, (error) => {
         if (error) {
-            response(res, 404, {
+            res.return({
                 reason: '404 NOT Found'
-            });
+            }, { status: 404 });
         } else {
-            response(res, 200, {
+            res.return({
                 data: name
             });
         }

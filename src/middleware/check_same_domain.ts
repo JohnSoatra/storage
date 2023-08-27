@@ -1,27 +1,33 @@
 import { NextFunction, Request, Response } from "express";
 import { testMode } from "@/utils/env/env";
 import getHost from "@/utils/string/url";
-import response from "@/utils/response/response";
+import { isUndefined } from "@/utils/utils";
 
-function checkSameDomain(req: Request, res: Response, next: NextFunction) {
+function checkSameDomain(request: Request, response: Response, next: NextFunction) {
     if (testMode()) {
         next();
     } else {
-        if (req.headers.referer && req.headers.host) {
-            const referer = getHost(req.headers.referer);
-            const host = getHost(req.headers.host);
-        
+        if (!isUndefined(request.headers.referer) && !isUndefined(request.headers.host)) {
+            const referer = getHost(request.headers.referer!);
+            const host = getHost(request.headers.host!);
+
             if (referer === host) {
-                response(res, 400, {
-                    reason: 'Not allowed origin'
-                });
+                response.return(
+                    'Not allowed origin',
+                    {
+                        status: 400
+                    }
+                );
             } else {
                 next();
             }
         } else {
-            response(res, 400, {
-                reason: 'Not allowed origin'
-            });
+            response.return(
+                'Not allowed origin',
+                {
+                    status: 400
+                }
+            );
         }
     }
 }

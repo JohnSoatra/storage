@@ -5,11 +5,16 @@ function isNullUndefined(value: any) {
     );
 }
 
+function isUndefined(value: any) {
+    return value === undefined;
+}
+
 function stringEmpty(value: string) {
     return value === '';
 }
 
 export {
     isNullUndefined,
-    stringEmpty
+    stringEmpty,
+    isUndefined
 }
